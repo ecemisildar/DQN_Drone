@@ -6,7 +6,6 @@ import rospy
 import numpy as np
 from tf.transformations import *
 from air_drone.msg import Pose, MotorSpeed
-#from turtle import position
 import gym
 from gym import spaces
 import rospy
