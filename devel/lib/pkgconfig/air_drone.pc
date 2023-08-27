@@ -1,0 +1,8 @@
+prefix=/home/ecem/drone_ws/devel
+
+Name: air_drone
+Description: Description of air_drone
+Version: 0.0.0
+Cflags: -I/home/ecem/drone_ws/devel/include
+Libs: -L${prefix}/lib 
+Requires: 

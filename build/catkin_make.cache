@@ -1,0 +1,2 @@
+air_drone
+-DCATKIN_DEVEL_PREFIX=/home/ecem/drone_ws/devel -DCMAKE_INSTALL_PREFIX=/home/ecem/drone_ws/install -G Unix Makefiles

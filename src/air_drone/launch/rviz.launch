@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<launch>
+  <!-- this defines the path to the URDF model -->
+  <!--arg name="model" default="$(find air_drone)/urdf/drone.urdf.xacro"/-->
+  <!-- this is the path to the rviz configuration file -->
+  <arg name="rvizconfig" default="$(find air_drone)/rviz/drone.rviz" />
+
+  <!-- load the drone description onto the ROS parameter server -->
+  <!--param name="robot_description" textfile="$(find air_drone)/urdf/drone.urdf"/-->
+
+  <!-- Load the URDF into the ROS Parameter Server -->
+  <param name="robot_description"
+  command="$(find xacro)/xacro '$(find air_drone)/urdf/drone.urdf.xacro'"/> 
+
+  <!-- launch joint_state_publisher to publish fake joint states -->
+  <node name="joint_state_publisher_gui" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui"/>
+
+
+  <!-- launch robot_state_publisher to publish link positions -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+   <!-- launch rviz -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true"/>
+</launch>

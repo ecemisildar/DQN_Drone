@@ -1,0 +1,261 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="drone">
+ 
+  <!-- properties -->
+  <xacro:property name="frame_radius" value="0.1"/>
+  <xacro:property name="frame_height" value="0.05"/>
+  <xacro:property name="frame_mass" value="0.88"/>
+  <xacro:property name="arm_radius" value="0.01"/>
+  <xacro:property name="arm_length" value="0.15"/>
+  <xacro:property name="arm_mass" value="0.01"/>
+  <xacro:property name="propeller_radius" value="0.1"/>
+  <xacro:property name="propeller_height" value="0.01"/>
+  <xacro:property name="propeller_height_offset" value="0.025"/>
+  <xacro:property name="propeller_mass" value="0.01"/>
+  
+
+<xacro:macro name="cylinder_inertial" params="radius height mass *origin">
+    <inertial>
+      <mass value="${mass}"/>
+      <xacro:insert_block name="origin"/>
+      <inertia
+        ixx="${0.0833333 * mass * (3 * radius * radius + height * height)}"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="${0.0833333 * mass * (3 * radius * radius + height * height)}"
+        iyz="0.0"
+        izz="${0.5 * mass * radius * radius}"
+      />
+    </inertial>
+  </xacro:macro>   
+  
+  <xacro:macro name="arm" params="i">
+    <link name="arm${i}">
+      <visual>
+        <origin xyz="${cos((i-1)*pi/3+pi/6)*(frame_radius+arm_length/2)} ${sin((i-1)*pi/3+pi/6)*(frame_radius+arm_length/2)} ${frame_height/2-arm_radius}" rpy="0 ${pi/2} ${(i-1)*pi/3+pi/6}"/>
+        <geometry>
+          <cylinder radius="${arm_radius}" length="${arm_length}"/>
+        </geometry>
+        <material name="arm_material"/>
+      </visual>
+      <collision>
+        <origin xyz="${cos((i-1)*pi/3+pi/6)*(frame_radius+arm_length/2)} ${sin((i-1)*pi/3+pi/6)*(frame_radius+arm_length/2)} ${frame_height/2-arm_radius}" rpy="0 ${pi/2} ${(i-1)*pi/3+pi/6}"/>
+        <geometry>
+          <cylinder radius="${arm_radius}" length="${arm_length}"/>
+        </geometry>
+      </collision>
+      <xacro:cylinder_inertial radius="${arm_radius}" height="${arm_length}" mass="${arm_mass}">
+        <origin xyz="${cos((i-1)*pi/3+pi/6)*(frame_radius+arm_length/2)} ${sin((i-1)*pi/3+pi/6)*(frame_radius+arm_length/2)} ${frame_height/2-arm_radius}" rpy="0 ${pi/2} ${(i-1)*pi/3+pi/6}"/>
+      </xacro:cylinder_inertial>
+    </link>
+   
+    <joint name="frame_arm${i}" type="fixed">
+      <parent link="drone"/>
+      <child link="arm${i}"/>
+    </joint>
+   
+    <gazebo reference="arm${i}">
+      <material>Gazebo/Grey</material>
+    </gazebo>
+  </xacro:macro>
+  
+  <xacro:macro name="propeller" params="i mat">
+    <link name="propeller${i}">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="${propeller_radius}" length="${propeller_height}"/>
+        </geometry>
+        <material name="propeller_material"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="${propeller_radius}" length="${propeller_height}"/>
+        </geometry>
+      </collision>
+      <xacro:cylinder_inertial radius="${propeller_radius}" height="${propeller_height}" mass="${propeller_mass}">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+      </xacro:cylinder_inertial>
+    </link>
+   
+    <joint name="arm${i}_propeller${i}" type="revolute">
+      <parent link="arm${i}"/>
+      <child link="propeller${i}"/>
+      <origin xyz="${cos((i-1)*pi/3+pi/6)*(frame_radius+arm_length)} ${sin((i-1)*pi/3+pi/6)*(frame_radius+arm_length)} ${frame_height/2-arm_radius+propeller_height_offset}" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/>
+      <limit lower="0" upper="0" effort="0" velocity="0"/>
+    </joint>
+   
+    <gazebo reference="propeller${i}">
+      <material>${mat}</material>
+    </gazebo>
+  </xacro:macro>
+  
+  <material name="frame_material">
+    <color rgba="1 0.2 0.2 1"/>
+  </material>
+ 
+  <material name="arm_material">
+    <color rgba="0.8 0.8 0.8 1"/>
+  </material>
+ 
+  <material name="propeller_material">
+    <color rgba="0 0 0 0.6"/>
+  </material>
+  
+  <link name="drone">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${frame_radius}" length="${frame_height}"/>
+      </geometry>
+      <material name="frame_material">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${frame_radius}" length="${frame_height}"/>
+      </geometry>
+    </collision>
+    <xacro:cylinder_inertial radius="${frame_radius}" height="${frame_height}" mass="${frame_mass}">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+    </xacro:cylinder_inertial>
+  </link>
+
+  <gazebo reference="drone">
+    <material>Gazebo/Orange</material>
+  </gazebo>
+  
+  <xacro:arm i="1"/>
+  <xacro:arm i="2"/>
+  <xacro:arm i="3"/>
+  <xacro:arm i="4"/>
+  <xacro:arm i="5"/>
+  <xacro:arm i="6"/>
+ 
+  <xacro:propeller i="1" mat="Gazebo/RedTransparent"/>
+  <xacro:propeller i="2" mat="Gazebo/BlackTransparent"/>
+  <xacro:propeller i="3" mat="Gazebo/BlueTransparent"/>
+  <xacro:propeller i="4" mat="Gazebo/BlueTransparent"/>
+  <xacro:propeller i="5" mat="Gazebo/BlackTransparent"/>
+  <xacro:propeller i="6" mat="Gazebo/RedTransparent"/>
+
+
+
+<gazebo>
+    <plugin name="drone_plugin" filename="libdrone_plugin.so">
+      <updateRate>100</updateRate>
+      <publishTf>true</publishTf>
+      <rotorThrustCoeff>0.00025</rotorThrustCoeff>
+      <rotorTorqueCoeff>0.0000074</rotorTorqueCoeff>
+    </plugin>
+</gazebo>
+
+<!--XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX-->
+<!-- Add a visual marker for the goal location -->
+<!-- Create Depth Camera Link -->
+<!-- Create Depth Camera Link -->
+  <link name="depth_camera">
+    <visual>
+      <geometry>
+        <box size="0.05 0.05 0.05"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.05 0.05 0.05"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.0001"/>
+      <origin rpy="0 0 0" xyz="1 0 0"/>
+      <inertia ixx="0.01" ixy="0.01" ixz="0.01" iyy="0.01" iyz="0.01" izz="0.01"/>
+    </inertial>
+    <material name="camera_color">
+      <color rgba="0 0 0 1"/>
+    </material>
+  </link>
+
+  <!-- Create Depth Camera Joint -->
+  <joint name="camera_joint" type="fixed">
+    <parent link="drone"/>
+    <child link="depth_camera"/>
+    <!--origin xyz="0 0 1.05" rpy="0 0 0"/-->
+    <origin xyz="0 0 0.05" rpy="0 0 1.5708"/>
+
+    <axis xyz="0 1 0"/>
+    <limit lower="-3.14159" upper="3.14159" effort="10" velocity="3.14159"/>
+  </joint>
+
+
+<gazebo reference="drone">
+  <sensor name="frame_camera" type="depth">
+    <update_rate>20</update_rate>
+    <camera>
+      <horizontal_fov>1.047198</horizontal_fov>
+      <image>
+        <width>640</width>
+        <height>480</height>
+        <format>R8G8B8</format>
+      </image>
+      <clip>
+        <near>0.05</near>
+        <far>3</far>
+      </clip>
+    </camera>
+    <plugin name="frame_controller" filename="libgazebo_ros_openni_kinect.so">
+      <baseline>0.2</baseline>
+      <alwaysOn>true</alwaysOn>
+      <updateRate>1.0</updateRate>
+      <cameraName>depth_camera_ir</cameraName>
+      <imageTopicName>/depth_camera/color/image_raw</imageTopicName>
+      <cameraInfoTopicName>/depth_camera/color/camera_info</cameraInfoTopicName>
+      <depthImageTopicName>/depth_camera/depth/image_raw</depthImageTopicName>
+      <depthImageInfoTopicName>/depth_camera/depth/camera_info</depthImageInfoTopicName>
+      <pointCloudTopicName>/depth_camera/depth/points</pointCloudTopicName>
+      <frameName>drone</frameName>
+      <pointCloudCutoff>0.5</pointCloudCutoff>
+      <pointCloudCutoffMax>3.0</pointCloudCutoffMax>
+      <distortionK1>0.00000001</distortionK1>
+      <distortionK2>0.00000001</distortionK2>
+      <distortionK3>0.00000001</distortionK3>
+      <distortionT1>0.00000001</distortionT1>
+      <distortionT2>0.00000001</distortionT2>
+      <CxPrime>0</CxPrime>
+      <Cx>0</Cx>
+      <Cy>0</Cy>
+      <focalLength>0</focalLength>
+      <hackBaseline>0</hackBaseline>
+    </plugin>
+  </sensor>
+</gazebo>
+
+ <link name="world">
+    <visual>
+      <geometry>
+        <sphere radius="0.01"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <mass value="0.001"/>
+      <inertia ixx="0.00001" ixy="0.00001" ixz="0.00001" iyy="0.00001" iyz="0.00001" izz="0.00001"/>
+    </inertial>
+  </link>
+
+  <joint name="world_frame_joint" type="fixed">
+    <parent link="world"/>
+    <child link="drone"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Include the gazebo_ros_marker plugin -->
+  <plugin name="marker_plugin" filename="libgazebo_ros_marker.so">
+    <namespace>/goal_marker</namespace>
+    <topic>/goal_marker</topic>  <!-- The topic where your Python script publishes markers -->
+  </plugin>
+
+</robot>
+
